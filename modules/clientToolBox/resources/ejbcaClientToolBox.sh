@@ -17,4 +17,4 @@ fi
 
 # Finally run java
 #set -x
-${javaCmd} ${JAVA_OPT} -cp "$TOOLBOX_HOME/clientToolBox.jar:${TOOLBOX_HOME}/ext/*" org.ejbca.ui.cli.ClientToolBox "${@}"
+${javaCmd} ${JAVA_OPT} -cp "$TOOLBOX_HOME/clientToolBox.jar:${TOOLBOX_HOME}/ext/*:${TOOLBOX_HOME}/lib/*" org.ejbca.ui.cli.ClientToolBox "${@}"

@@ -13,20 +13,19 @@
 
 package org.ejbca.util.keystore;
 
-import java.io.IOException;
-import java.security.KeyStore;
-import java.security.Provider;
-import java.security.Security;
-import java.security.KeyStore.CallbackHandlerProtection;
-
-import javax.security.auth.callback.CallbackHandler;
-
 import org.apache.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.cesecore.keys.token.CachingKeyStoreWrapper;
 import org.cesecore.keys.token.p11.Pkcs11SlotLabel;
 import org.cesecore.keys.token.p11.Pkcs11SlotLabelType;
 import org.cesecore.keys.util.KeyStoreTools;
+
+import javax.security.auth.callback.CallbackHandler;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStore.CallbackHandlerProtection;
+import java.security.Provider;
+import java.security.Security;
 
 /**
  * @version $Id$
@@ -70,7 +69,15 @@ public class KeyStoreToolsFactory {
             pp = new CallbackHandlerProtection(cbh);            
         }
         Provider provider = Security.getProvider(providerName);
-        KeyStore.Builder builder = KeyStore.Builder.newInstance("PKCS11", provider, pp);
+
+        String keyStoreType;
+        if ("Cavium".equalsIgnoreCase(providerName)) {
+            keyStoreType = "CloudHSM";
+        } else {
+            keyStoreType = "PKCS11";
+        }
+
+        KeyStore.Builder builder = KeyStore.Builder.newInstance(keyStoreType, provider, pp);
         final KeyStore keyStore = builder.getKeyStore();
         return new KeyStoreTools(new CachingKeyStoreWrapper(keyStore, true), providerName);
     }

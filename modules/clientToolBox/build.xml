@@ -16,6 +16,7 @@
 	<property name="clientToolBox.build-test.dir" location="${clientToolBox.dir}/build-test"/>
 
 	<path id="clientToolBox.lib.classpath">
+		<path refid="lib.cloudhsm.classpath"/>
 		<path refid="lib.bouncycastle.classpath"/>
 		<path refid="lib.cert-cvc.classpath"/>
 		<path refid="lib.commons-collections.classpath"/>

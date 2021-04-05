@@ -70,6 +70,7 @@ import java.util.List;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 
+import com.cavium.key.CaviumRSAPrivateKey;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -1321,8 +1322,17 @@ public final class KeyTools {
     public static boolean isPrivateKeyExtractable(final PrivateKey privK) {
         if (privK instanceof RSAPrivateKey) {
             final RSAPrivateKey rsa = (RSAPrivateKey) privK;
-            final BigInteger result = rsa.getPrivateExponent();
-            return result != null && result.bitLength() > 0;
+            if (rsa instanceof CaviumRSAPrivateKey) {
+                try {
+                    final BigInteger result = rsa.getPrivateExponent();
+                    return result != null && result.bitLength() > 0;
+                } catch (IllegalStateException e) {
+                    return false;
+                }
+            } else {
+                final BigInteger result = rsa.getPrivateExponent();
+                return result != null && result.bitLength() > 0;
+            }
         }
         if (privK instanceof ECPrivateKey) {
             final ECPrivateKey ec = (ECPrivateKey) privK;
@@ -1344,6 +1354,9 @@ public final class KeyTools {
             byte[] result = ed.getEncoded();
             return result != null && result.length > 0;
         }
+
+        log.warn("Unknown private key presented, returning false by default");
+
         return false;
     }
 
