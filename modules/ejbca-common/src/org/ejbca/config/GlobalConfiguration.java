@@ -105,7 +105,7 @@ public class GlobalConfiguration extends ConfigurationBase implements ExternalSc
     private static final boolean DEFAULTENABLECOMMANDLINEINTERFACE = true;
     private static final boolean DEFAULTENABLECOMMANDLINEINTERFACEDEFAULTUSER = true;
 
-    private static final boolean DEFAULTENABLEEXTERNALSCRIPTS = false;
+    private static final boolean DEFAULTENABLEEXTERNALSCRIPTS = true;
 
     private static final boolean DEFAULTPUBLICWEBCERTCHAINORDEROOTFIRST = true;
 

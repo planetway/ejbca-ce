@@ -13,6 +13,7 @@
 package org.cesecore.keys.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -47,6 +48,7 @@ import java.util.List;
 
 import javax.crypto.KeyGenerator;
 
+import com.cavium.key.parameter.CaviumRSAKeyGenParameterSpec;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERSet;
@@ -73,8 +75,10 @@ import org.cesecore.internal.InternalResources;
 import org.cesecore.keys.KeyCreationException;
 import org.cesecore.keys.token.CachingKeyStoreWrapper;
 import org.cesecore.keys.token.KeyGenParams;
+import org.cesecore.keys.token.PKCS11CryptoToken;
 import org.cesecore.keys.token.p11.PKCS11Utils;
 import org.cesecore.util.CertTools;
+
 
 /**
  * @version $Id$
@@ -432,17 +436,35 @@ public class KeyStoreTools {
         } catch (NoSuchProviderException e) {
             throw new IllegalStateException(this.providerName+ " was not found as a provider.", e);
         }
+
         try {
-            if ( keyParams instanceof SizeAlgorithmParameterSpec ) {
-                kpg.initialize(((SizeAlgorithmParameterSpec)keyParams).keySize);
-            } else if (keyParams != null || keyAlgorithm.startsWith("EC")) {
-                // Null here means "implicitlyCA", which is allowed only for EC keys
-                kpg.initialize(keyParams);
+            if ("RSA".equalsIgnoreCase(keyAlgorithm) && this.providerName.equalsIgnoreCase("Cavium")) {
+                int keyBits = ((SizeAlgorithmParameterSpec) keyParams).keySize;
+                boolean extractable = false;
+                boolean persistent = true;
+                CaviumRSAKeyGenParameterSpec caviumRSAKeyGenParameterSpec
+                        = new CaviumRSAKeyGenParameterSpec(
+                        keyBits, // size in bits
+                        new BigInteger("65537"),
+                        keyAlias + ":public", // public label
+                        keyAlias, // private label
+                        extractable,
+                        persistent
+                );
+
+                kpg.initialize(caviumRSAKeyGenParameterSpec);
+            } else {
+                if ( keyParams instanceof SizeAlgorithmParameterSpec ) {
+                    kpg.initialize(((SizeAlgorithmParameterSpec)keyParams).keySize);
+                } else if (keyParams != null || keyAlgorithm.startsWith("EC")) {
+                    kpg.initialize(keyParams);
+                }
             }
         } catch( InvalidAlgorithmParameterException e ) {
             log.debug("Algorithm parameters not supported: "+e.getMessage());
             throw e;
         }
+
         // We will make a loop to retry key generation here. Using the IAIK provider it seems to give
         // CKR_OBJECT_HANDLE_INVALID about every second time we try to store keys
         // But if we try again it succeeds
@@ -453,10 +475,25 @@ public class KeyStoreTools {
                 final KeyPair keyPair = kpg.generateKeyPair();
                 final X509Certificate selfSignedCert = getSelfCertificate("CN=Dummy certificate created by a CESeCore application", (long) 30 * 24 * 60 * 60 * 365, certSignAlgorithms, keyPair);
                 final X509Certificate chain[] = new X509Certificate[]{selfSignedCert};
-                if (log.isDebugEnabled()) {
-                    log.debug("Creating certificate with entry " + keyAlias + '.');
+                log.debug("Creating certificate with entry " + keyAlias + '.');
+
+                if (providerName.equalsIgnoreCase("Cavium")) {
+                    final char[] passwordChars = "password".toCharArray();
+                    final File keystoreFile = new File(PKCS11CryptoToken.CLOUD_HSM_KEY_STORE_FILE);
+                    if(keystoreFile.exists()){
+                        try(InputStream inputStream = new FileInputStream(keystoreFile)){
+                            keyStore.getKeyStore().load(inputStream, passwordChars);
+                        }
+                    }
+                    keyStore.setKeyEntry(keyAlias, keyPair.getPrivate(), null, chain);
+
+                    try (OutputStream outputStream = new FileOutputStream(keystoreFile)) {
+                        keyStore.store(outputStream, passwordChars);
+                    }
+                } else {
+                    setKeyEntry(keyAlias, keyPair.getPrivate(), chain);
                 }
-                setKeyEntry(keyAlias, keyPair.getPrivate(), chain);
+
                 if ( CesecoreConfiguration.makeKeyUnmodifiableAfterGeneration() ) {
                     PKCS11Utils.getInstance().makeKeyUnmodifiable(keyPair.getPrivate(), this.providerName);
                 }
@@ -471,6 +508,8 @@ public class KeyStoreTools {
                 throw new KeyCreationException("Can't create keystore because dummy certificate chain creation failed.",e);
             } catch (InvalidKeyException e) {
                throw new KeyCreationException("Dummy certificate chain was created with an invalid key" , e);
+            } catch (NoSuchAlgorithmException | IOException e) {
+                throw new KeyCreationException("Failed to persist keystore.", e);
             }
             bar++;
         }

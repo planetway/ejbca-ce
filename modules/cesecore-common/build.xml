@@ -11,6 +11,7 @@
 	<property name="cesecore-common.resources-test.dir" location="${cesecore-common.dir}/resources-test"/>
 
 	<path id="compile.classpath">
+		<path refid="lib.cloudhsm.classpath"/>
 		<path refid="lib.commons-lang.classpath"/>
 		<path refid="lib.commons-text.classpath"/>
 		<path refid="lib.jee.classpath" />

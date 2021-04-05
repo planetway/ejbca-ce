@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import com.cavium.provider.CaviumProvider;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -97,6 +98,7 @@ public class Pkcs11SlotLabel {
         if (log.isDebugEnabled()) {
             log.debug("slot spec: " + toString());
         }
+
         if ( this.type==Pkcs11SlotLabelType.SUN_FILE ) {// if sun cfg file then we do not know the name of the p11 module and we must quit.
             try {
                 List<String> fileContent = new ArrayList<>(Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8));
@@ -139,6 +141,14 @@ public class Pkcs11SlotLabel {
         default:
             throw new IllegalStateException("This should not ever happen if all type of slots are tested.");
         }
+
+        final Provider caviumProvider = getCaviumProvider(slot, libFile, this.type);
+        if (caviumProvider != null) {
+            log.debug("Using Cavium provider for " + libFile);
+
+            return caviumProvider;
+        }
+
         {// We will first try to construct the more competent IAIK provider, if it exists in the classpath
             final Provider prov = getIAIKP11Provider(slot, libFile, this.type);
             if (prov != null) {
@@ -210,6 +220,21 @@ public class Pkcs11SlotLabel {
             return slotID;
         }
         throw new NoSuchSlotException("Token label '" + tokenLabel + "' not found.");
+    }
+
+    private static Provider getCaviumProvider(final long slot, final File libFile, final Pkcs11SlotLabelType type) {
+        if (libFile.getName().startsWith("libcloudhsm")
+                || libFile.getName().startsWith("libliquidsec")) {
+            try {
+                return new CaviumProvider();
+            } catch (Exception e) {
+                log.debug("Failed to load Cavium provider. ", e);
+
+                return null;
+            }
+        }
+
+        return null;
     }
 
     /**

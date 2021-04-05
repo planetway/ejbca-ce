@@ -23,8 +23,12 @@ import org.cesecore.keys.token.p11.Pkcs11SlotLabelType;
 import org.cesecore.keys.token.p11.exception.NoSuchSlotException;
 import org.cesecore.keys.util.KeyStoreTools;
 
+import com.cavium.provider.CaviumProvider;
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -34,7 +38,7 @@ import java.util.Properties;
 
 /**
  * Class implementing a keystore on PKCS11 tokens.
- * 
+ *
  * @version $Id$
  */
 public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
@@ -56,24 +60,25 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
      * Can be used to create a crypto token without actually installing it in Java Security, so it
      * can be created temporarily */
     public static final String DO_NOT_ADD_P11_PROVIDER = "doNotAddP11Provider";
-    
+
     @Deprecated //Remove once upgrading from 5.0->6.0 is no longer supported
     public static final String SLOT_LIST_INDEX_KEY = "slotListIndex";
     @Deprecated //Remove once upgrading from 5.0->6.0 is no longer supported
     public static final String SLOT_LABEL_KEY = "slot";
 
-    
+
     /** A user defined name of the slot provider. Used in order to be able to have two different providers
      * (with different PKCS#11 attributes) for the same slot. If this is not set (null), the default
      * java provider name is used (SunPKCS11-pkcs11LibName-slotNr for example SunPKCS11-libcryptoki.so-slot1).
      */
     public final static String TOKEN_FRIENDLY_NAME = "tokenFriendlyName";
-    
+    public static final String CLOUD_HSM_KEY_STORE_FILE = "/opt/ejbca/p12/CloudHSM.p12";
+
     private transient P11Slot p11slot;
 
     /** we store this as an instance variable so we can log it */
     private String sSlotLabel = null;
-    
+
     /**
      * @param providerClass
      * @throws InstantiationException
@@ -102,7 +107,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
     }
 
     /** Parts of init that should not be run one every instance creation, but that can be delayed until we try to activate the token..
-     * Since instances (init) is called also on de-activated crypto token we should not use methods that try to call it (perhaps an off-line HSM) in normal init. 
+     * Since instances (init) is called also on de-activated crypto token we should not use methods that try to call it (perhaps an off-line HSM) in normal init.
      * @throws NoSuchSlotException if the slot asked for by slotLabel and slotLabelType does not exist in the token
      * @throws CryptoTokenOfflineException if the token is not on-line (wrong PIN for example)
      */
@@ -121,7 +126,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
             p11slot = P11Slot.getInstance(friendlyName, sSlotLabel, sharedLibrary, slotLabelType, attributesFile, this, id, addProvider);
         } else {
             p11slot = P11Slot.getInstance(sSlotLabel, sharedLibrary, slotLabelType, attributesFile, this, id, addProvider);
-            
+
         }
         final Provider provider = p11slot.getProvider();
         if (addProvider) {
@@ -166,8 +171,26 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
     private KeyStore createKeyStore(final char[] authCode) throws NoSuchAlgorithmException, CertificateException,
             IOException, KeyStoreException {
         final Provider provider = this.p11slot.getProvider();
-        final KeyStore newKeyStore = KeyStore.getInstance( "PKCS11", provider );
+        final KeyStore newKeyStore;
+
         log.debug("Loading key from slot '" + this.sSlotLabel + "' using pin.");
+
+        if (provider instanceof CaviumProvider) {
+            newKeyStore = KeyStore.getInstance("CloudHSM");
+
+            try (InputStream inputStream = new FileInputStream(CLOUD_HSM_KEY_STORE_FILE)) {
+                newKeyStore.load(inputStream, "password".toCharArray()); // TODO extract pw
+            } catch (FileNotFoundException e) {
+                log.info("CloudHSM keystore not found at " + CLOUD_HSM_KEY_STORE_FILE + ", initializing empty keystore.");
+
+                newKeyStore.load(null, null);
+            }
+
+            return newKeyStore;
+        } else {
+            newKeyStore = KeyStore.getInstance("PKCS11", provider);
+        }
+
         // See ECA-1395 for an explanation of this special handling for the IAIK provider.
         // If the application uses several instances of the IAIKPkcs11 provider, it has two options to get an initialized key store. First, it can get
         // the initialized key store directly from the provider instance. This looks like this
@@ -205,7 +228,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
             throw new IllegalStateException("This should never happen.");
         }
         if (this.p11slot != null) {
-            this.p11slot.logoutFromSlotIfNoTokensActive();            
+            this.p11slot.logoutFromSlotIfNoTokensActive();
         } else {
             log.debug("p11slot was null, token was not active trying to deactivate.");
         }
@@ -236,9 +259,9 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
     @Override
     public void generateKeyPair(KeyGenParams keyGenParams, String alias) throws InvalidAlgorithmParameterException, CryptoTokenOfflineException {
         generateKeyPair(keyGenParams.getKeySpecification(), alias);
-        
+
     }
-    
+
     @Override
     public void generateKeyPair(final String keySpec, final String alias) throws InvalidAlgorithmParameterException,
             CryptoTokenOfflineException {
@@ -251,7 +274,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
     }
 
     @Override
-    public void generateKeyPair(final AlgorithmParameterSpec spec, final String alias) throws 
+    public void generateKeyPair(final AlgorithmParameterSpec spec, final String alias) throws
             InvalidAlgorithmParameterException, CertificateException, IOException,
             CryptoTokenOfflineException {
         if (StringUtils.isNotEmpty(alias)) {
@@ -281,7 +304,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
         return null;
     }
 
-    /** calls delayedInit if we have not yet done so 
+    /** calls delayedInit if we have not yet done so
      * @see #delayedInit(Properties, int)
      */
     private P11Slot getP11slotWithDelayedInit() throws CryptoTokenOfflineException, NoSuchSlotException {
@@ -295,7 +318,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
     protected P11Slot getP11slot() {
         return p11slot;
     }
-    
+
     /**
      * Extracts the slotLabel that is used for many tokens in construction of the provider
      *
@@ -313,10 +336,10 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
         }
         return ret;
     }
-    
+
     /**
-     * Will replace deprecated properties values with the new ones. 
-     * 
+     * Will replace deprecated properties values with the new ones.
+     *
      * @param properties a properties file of the old format.
      * @return a defensive copy of the submitted properties
      */
@@ -324,7 +347,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
     //Remove when we no longer support upgrading from 5.0.x -> 6.0.x 
     public static Properties upgradePropertiesFileFrom5_0_x(final Properties properties) {
         Properties returnValue = new Properties();
-        
+
         for (Object key : properties.keySet()) {
             final String keyString = (String) key;
             if (log.isDebugEnabled()) {
@@ -347,7 +370,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
                     returnValue.setProperty(SLOT_LABEL_VALUE, keyValue);
                     returnValue.setProperty(SLOT_LABEL_TYPE, Pkcs11SlotLabelType.SLOT_NUMBER.getKey());
                 } else if(keyValue.startsWith(oldSlotNumberPrefix)) {
-                   //If not, check with the rest of the values 
+                   //If not, check with the rest of the values
                     returnValue.setProperty(SLOT_LABEL_VALUE, keyValue.split(delimiter, 2)[1]);
                     returnValue.setProperty(SLOT_LABEL_TYPE, Pkcs11SlotLabelType.SLOT_NUMBER.getKey());
                 } else if(keyValue.startsWith(oldIndexPrefix)) {
@@ -359,7 +382,7 @@ public class PKCS11CryptoToken extends BaseCryptoToken implements P11SlotUser {
                 } else if(keyValue.startsWith(oldSunFilePrefix)) {
                     returnValue.setProperty(SLOT_LABEL_TYPE, Pkcs11SlotLabelType.SUN_FILE.getKey());
                 }
-                
+
             } else if (keyString.equalsIgnoreCase(SLOT_LIST_INDEX_KEY)) {
                 String indexValue = properties.getProperty(keyString);
                 if (indexValue.charAt(0) != 'i') {
