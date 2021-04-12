@@ -4,7 +4,7 @@ pipeline {
 
   environment {
     ejbcaImageName = "723692602888.dkr.ecr.eu-north-1.amazonaws.com/ejbca-ce-app"
-    ejbcaVersion = '7.4.0'
+    ejbcaVersion = '7.4.3'
   }
 
   stages {
@@ -30,7 +30,6 @@ pipeline {
         script {
           docker.withRegistry('https://' + ejbcaImageName) {
             ejbcaDockerImage.push()
-            ejbcaDockerImage.push('latest') // add two tags to image - latest and jenkins build number
           }
         }
       }
