@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ejbca-app:
+    build:
+      context: ./
+    depends_on:
+      - ejbca-db
+    environment:
+      DATABASE_JDBC_URL: "jdbc:postgresql://ejbca-db/ejbca"
+      DATABASE_USER: "ejbca"
+      DATABASE_PASSWORD: "ejbca"
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+
+  ejbca-db:
+    image: postgres:13.2
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - "ejbca-db:/var/lib/postgresql/data"
+      - ./__ejbca_db_create.sql:/docker-entrypoint-initdb.d/__db_create.sql
+
+volumes:
+  ejbca-db:

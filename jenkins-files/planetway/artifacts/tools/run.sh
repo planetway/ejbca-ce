@@ -1,28 +1,14 @@
 #!/bin/bash
 
-function check_variable() {
-  if [ -z ${1+x} ]; then
-    echo "Database variable(s) are unset!"
-    echo "Exiting.."
-    exit 1
-  fi
-}
+SCRIPT_PATH="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 
-function log() {
-  # 2019-01-15 12:03:43,047
-  dateString="$(date +%Y-%m-%d' '%R:%S,%N%z | sed 's/\(.*\)......\(.....\)/\1\2/')"
-  logLevel=$(printf '%-5s' "${1:-INFO}")
-  className="$0"
-  processId="$$"
-  #threadId="$(ps H -o 'tid' $processId | tail -n 1| tr -d ' ')"
-  if [ -z "$2" ] ; then
-    while read line ; do
-      echo "$dateString $logLevel [$className] (process:$processId) ${line}"
-    done
-  else
-    echo "$dateString $logLevel [$className] (process:$processId) ${2}"
-  fi
-}
+# shellcheck source=scripts/helper_libs.sh
+. "${SCRIPT_PATH}/libs/helper_libs.sh"
+  test $? -ne 0 &&\
+    echo "failed loading helper libs from 'libs/helper_libs.sh'" &&\
+    exit 1
+
+set -e
 
 check_variable $DATABASE_JDBC_URL
 check_variable $DATABASE_USER
@@ -65,4 +51,20 @@ if [ $errorCode != 0 ] ; then
     --file "${EJBCA_HOME}/doc/sql-scripts/create-index-ejbca.sql"
 fi
 
+# Start widlfly and send to background
+$WILDFLY_HOME/bin/standalone.sh -b 0.0.0.0 &
+
+# Wait for deployment to be in OK status
+until $WILDFLY_HOME/bin/jboss-cli.sh -c "deployment-info --name=ejbca.ear" | grep -q OK; do
+  sleep 0.5
+done
+log "INFO" "ejbca.ear deployed"
+
+log "INFO" "Initializing management CA and superadmin"
+${SCRIPT_PATH}/init.sh
+
+log "INFO" "Shutting down wildfly"
+$WILDFLY_HOME/bin/jboss-cli.sh -c ":shutdown"
+
+log "INFO" "Starting widlfly"
 $WILDFLY_HOME/bin/standalone.sh -b 0.0.0.0
