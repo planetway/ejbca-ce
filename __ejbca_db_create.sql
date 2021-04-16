@@ -1,0 +1,2 @@
+CREATE USER ejbca WITH PASSWORD 'ejbca';
+CREATE DATABASE ejbca WITH OWNER 'ejbca';

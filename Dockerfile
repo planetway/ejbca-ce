@@ -19,25 +19,21 @@ ENV JAVA_OPTS="-Xms2048m -Xmx2048m -XX:MetaspaceSize=192M -XX:MaxMetaspaceSize=2
 ENV EJBCA_HOME=/opt/ejbca
 
 # Create EJBCA home directory, copy build and configuration artifacts
-RUN mkdir -p /opt/ejbca
 COPY bin ${EJBCA_HOME}/bin
 COPY dist ${EJBCA_HOME}/dist
 COPY doc ${EJBCA_HOME}/doc
 COPY src ${EJBCA_HOME}/src
 COPY jenkins-files/planetway/artifacts/clientToolBox/log4j.xml $EJBCA_HOME/dist/clientToolBox/properties/log4j.xml
+COPY jenkins-files/planetway/artifacts/ejbca-ejb-cli/log4j2.xml $EJBCA_HOME/dist/ejbca-ejb-cli/log4j2.xml
 
 # Set permissions and copy ejbca.ear to Wildfly deployments directory
 RUN chmod +x ${EJBCA_HOME}/bin/ejbca.sh \
     && chown -R apps:0 ${EJBCA_HOME}/dist \
     && cp ${EJBCA_HOME}/dist/ejbca.ear ${WILDFLY_HOME}/standalone/deployments/ejbca.ear
 
-# Create symlink to EJBCA home (backwards compatibility for ansible role)
-RUN mkdir -p /opt/primekey
-RUN ln -s ${EJBCA_HOME} /opt/primekey/ejbca
-
-# Copy the run script and set execution privileges to it
-ADD jenkins-files/planetway/artifacts/run.sh /opt/
-RUN chmod +x /opt/run.sh
+# Copy tools and set execution privileges
+ADD jenkins-files/planetway/artifacts/tools /opt/tools
+RUN chmod +x /opt/tools/run.sh /opt/tools/init.sh
 
 # Create p12 directory and set permissions
 RUN mkdir -p ${EJBCA_HOME}/p12 \
@@ -52,8 +48,8 @@ ENV LD_LIBRARY_PATH /opt/cloudhsm/lib
 # Set the working directory to /opt
 WORKDIR /opt/
 
-# Expose AJP
-EXPOSE 8009
+# Expose proxy-http and proxy-https
+EXPOSE 8081 8082
 
 #Execute run.sh
-CMD ["/opt/run.sh"]
+CMD ["/opt/tools/run.sh"]

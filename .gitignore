@@ -32,3 +32,17 @@
 build
 build-plugins-*
 dist
+# Added by Planetway
+build-certstore
+build-crlstore
+build-ejb
+build-interface
+build-common
+build-common-web
+build-cli
+build-test
+build-lib
+build-ssh
+build-war
+build-status
+modules/ra-gui/resources/js/jquery.min.js

@@ -4,7 +4,7 @@ pipeline {
 
   environment {
     ejbcaImageName = "723692602888.dkr.ecr.eu-north-1.amazonaws.com/ejbca-ce-app"
-    ejbcaVersion = '7.4.3'
+    ejbcaVersion = '7.4.3.3'
   }
 
   stages {
@@ -21,7 +21,7 @@ pipeline {
     stage('Build EJBCA Docker Image') {
       steps{
         script {
-          ejbcaDockerImage = docker.build(ejbcaImageName + ":${ejbcaVersion}.${BUILD_NUMBER}", "-f ./jenkins-files/planetway/Dockerfile .")
+          ejbcaDockerImage = docker.build(ejbcaImageName + ":${ejbcaVersion}.${BUILD_NUMBER}", "-f ./Dockerfile .")
         }
       }
     }

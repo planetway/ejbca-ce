@@ -85,17 +85,6 @@
                     <named-formatter name="PATTERN"/>
                 </formatter>
             </console-handler>
-            <size-rotating-file-handler name="LOGSTASH_FILE" autoflush="true">
-                <level name="INFO"/>
-                <formatter>
-                    <named-formatter name="LOGSTASH"/>
-                </formatter>
-                <file relative-to="jboss.server.log.dir" path="logstash.log"/>
-                <suffix value=".yyyy-MM-dd"/>
-                <append value="true"/>
-                <rotate-size value="10m"/>
-                <max-backup-index value="10"/>
-            </size-rotating-file-handler>
             <logger category="com.arjuna">
                 <level name="WARN"/>
             </logger>
@@ -202,47 +191,42 @@
                 <level name="${env.LOG_LEVEL_APP_OCSP_TRANSACTIONS:DEBUG}"/>
                 <handlers>
                     <handler name="CONSOLE"/>
-                    <handler name="LOGSTASH_FILE"/>
                 </handlers>
             </logger>
             <logger category="org.cesecore.certificates.ocsp.logging.AuditLogger" use-parent-handlers="false">
                 <level name="${env.LOG_LEVEL_APP_OCSP_AUDIT:INFO}"/>
                 <handlers>
                     <handler name="CONSOLE"/>
-                    <handler name="LOGSTASH_FILE"/>
                 </handlers>
             </logger>
             <logger category="org.ejbca.core.protocol.ws.logger.TransactionLogger" use-parent-handlers="false">
                 <level name="${env.LOG_LEVEL_APP_WS_TRANSACTIONS:DEBUG}"/>
                 <handlers>
                     <handler name="CONSOLE"/>
-                    <handler name="LOGSTASH_FILE"/>
                 </handlers>
             </logger>
             <logger category="org.ejbca" use-parent-handlers="false">
                 <level name="${env.LOG_LEVEL_APP:INFO}"/>
                 <handlers>
                     <handler name="CONSOLE"/>
-                    <handler name="LOGSTASH_FILE"/>
                 </handlers>
             </logger>
             <logger category="org.cesecore" use-parent-handlers="false">
                 <level name="${env.LOG_LEVEL_APP:INFO}"/>
                 <handlers>
                     <handler name="CONSOLE"/>
-                    <handler name="LOGSTASH_FILE"/>
                 </handlers>
             </logger>
             <root-logger>
                 <level name="${env.LOG_LEVEL_SERVER:INFO}"/>
                 <handlers>
                     <handler name="CONSOLE"/>
-                    <handler name="LOGSTASH_FILE"/>
                 </handlers>
             </root-logger>
             <formatter name="PATTERN">
                 <pattern-formatter pattern="%d{yyyy-MM-dd HH:mm:ss,SSSZ} %-5p [%c] (%t) %s%e%n"/>
             </formatter>
+            <!--
             <formatter name="LOGSTASH">
                 <json-formatter>
                     <exception-output-type value="formatted"/>
@@ -252,6 +236,7 @@
                     </meta-data>
                 </json-formatter>
             </formatter>
+            -->
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:batch-jberet:2.0">
             <default-job-repository name="in-memory"/>
@@ -561,7 +546,8 @@
         <subsystem xmlns="urn:jboss:domain:undertow:7.0" default-server="default-server" default-virtual-host="default-host" default-servlet-container="default" default-security-domain="other">
             <buffer-cache name="default"/>
             <server name="default-server">
-                <ajp-listener name="ajp-listener" socket-binding="ajp" enabled="true" scheme="https"/>
+                <http-listener name="proxy-https-listener" socket-binding="proxy-https" max-post-size="33554432" allow-encoded-slash="true" secure="true" certificate-forwarding="true" proxy-address-forwarding="true"/>
+                <http-listener name="proxy-http-listener" socket-binding="proxy-http" max-post-size="33554432" allow-encoded-slash="true" redirect-socket="proxy-https" proxy-address-forwarding="true"/>
                 <http-listener name="remoting" socket-binding="remoting" enable-http2="true"/>
                 <host name="default-host" alias="localhost">
                     <filter-ref name="redirect-to-app" predicate="method(GET) and not path-prefix('/ejbca/','/crls','/certificates','/.well-known/') and not equals({%{LOCAL_PORT}, 4447})"/>
@@ -596,11 +582,15 @@
         <interface name="public">
             <inet-address value="${jboss.bind.address:127.0.0.1}"/>
         </interface>
+        <interface name="proxy-http">
+            <inet-address value="${jboss.bind.address:127.0.0.1}"/>
+        </interface>
     </interfaces>
     <socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">
         <socket-binding name="management-http" interface="management" port="${jboss.management.http.port:9990}"/>
         <socket-binding name="management-https" interface="management" port="${jboss.management.https.port:9993}"/>
-        <socket-binding name="ajp" port="${jboss.ajp.port:8009}"/>
+        <socket-binding name="proxy-http" interface="proxy-http" port="8081"/>
+        <socket-binding name="proxy-https" interface="proxy-http" port="8082"/>
         <socket-binding name="txn-recovery-environment" port="4712"/>
         <socket-binding name="txn-status-manager" port="4713"/>
         <socket-binding name="remoting" interface="management" port="4447"/>
