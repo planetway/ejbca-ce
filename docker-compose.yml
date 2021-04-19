@@ -10,8 +10,8 @@ services:
       DATABASE_JDBC_URL: "jdbc:postgresql://ejbca-db/ejbca"
       DATABASE_USER: "ejbca"
       DATABASE_PASSWORD: "ejbca"
-      SERVER_CERT: "/mnt/server_cert.pem"
-      SERVER_KEY: "/mnt/server_key.pem"
+      SERVER_CERT: "/opt/persistent_datastore/server.crt"
+      SERVER_KEY: "/opt/persistent_datastore/server.key"
       SERVER_KEY_PASSWORD: "secret"
     ports:
       - "8080:8080"
