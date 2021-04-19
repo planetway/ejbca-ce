@@ -1,30 +1,51 @@
 #!/bin/bash
 
-SCRIPT_PATH="$( cd "$(dirname "$0")" || exit ; pwd -P )"
+# set relative path
+script_path="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 
-# shellcheck source=scripts/helper_libs.sh
-. "${SCRIPT_PATH}/libs/helper_libs.sh"
-  test $? -ne 0 &&\
-    echo "failed loading helper libs from 'libs/helper_libs.sh'" &&\
-    exit 1
+# include libaries
+libraries="common_libs.sh ejbca_libs.sh wildfly_libs.sh"
+for l in $libraries; do
+  # shellcheck source=libs/*.sh
+  . "$script_path/libs/$l"
+    test $? -ne 0 &&\
+      echo "failed loading $l from '$l'" &&\
+      exit 1
+done
 
-set -e
+# global variables
+persistent_datastore="${persistent_datastore:-/opt/persistent_datastore}"
+server_truststore_password="${server_truststore_password:-changeit}"
 
-environment="${environment:-local}"
-ca_name="${environment}_management_ca"
-admin_user="${admin_user:-superadmin}"
-admin_user_password="${admin_user_password:-secret}"
+# configure ejbca
+function configure_ejbca() {
+  local environment="${environment:-local}"
+  local management_ca_name="${environment}_management_ca"
+  local management_ca_admin="${management_ca_admin:-superadmin}"
+  local management_ca_admin_password="${management_ca_admin_password:-secret}"
+  
+  ejbca_initialize_ca $management_ca_name 3072 ${persistent_datastore}/${management_ca_name}.crt
+  ejbca_create_truststore $management_ca_name ${persistent_datastore}/${management_ca_name}.crt ${persistent_datastore}/truststore.jks $server_truststore_password
+  ejbca_create_end_entity $management_ca_name $management_ca_admin $management_ca_admin_password
+  ejbca_add_rolemember $management_ca_name 'Super Administrator Role' $management_ca_admin
+}
 
-if ! ${EJBCA_HOME}/bin/ejbca.sh ca listcas | grep $ca_name ; then
-  log "INFO" "Initializing management CA"
-  ${EJBCA_HOME}/bin/ejbca.sh ca init  --caname $ca_name --dn "CN=${ca_name}" --tokenType soft \
-                      --tokenPass null --keytype RSA --keyspec 3072 -v 3652 \
-                      --policy null -s SHA384WithRSA -type x509
-fi
+function configure_wildfly() {
+  local server_cert="${server_cert:-${persistent_datastore}/server.crt}"
+  local server_key="${server_key:-${persistent_datastore}/server.key}"
+  local server_key_password="${server_key_password:-secret}"
+  local server_name="${server_name:-localhost}"
+  local server_keystore_path="${server_keystore_path:-${persistent_datastore}/server.jks}"
+  local server_keystore_password="${server_keystore_password:-secret}"
+  local server_truststore_path="${server_truststore_path:-${persistent_datastore}/truststore.jks}"
 
-if ! ${EJBCA_HOME}/bin/ejbca.sh ra findendentity --username $admin_user; then
-  log "INFO" "Creating admin user"
-  ${EJBCA_HOME}/bin/ejbca.sh ra addendentity --username $admin_user --dn "CN=${admin_user}" --caname $ca_name --type 1 --token P12 --password $admin_user_password
-  ${EJBCA_HOME}/bin/ejbca.sh roles removeadmin --role 'Super Administrator Role' --caname "" --with PublicAccessAuthenticationToken:TRANSPORT_CONFIDENTIAL --value ""
-  ${EJBCA_HOME}/bin/ejbca.sh roles addrolemember --role 'Super Administrator Role' --caname $ca_name --with 'WITH_COMMONNAME' --value $admin_user
-fi
+  convert_p12_to_jks $server_cert $server_key $server_key_password $server_name $server_keystore_path $server_keystore_password
+  if ! wildfly_https_listener; then
+    wildfly_configure_https $server_keystore_path $server_keystore_password $server_truststore_path $server_truststore_password
+  fi
+}
+
+start_wildfly
+configure_ejbca
+configure_wildfly
+stop_wildfly
