@@ -14,15 +14,15 @@ for l in $libraries; do
 done
 
 # global variables
-persistent_datastore="${persistent_datastore:-/opt/persistent_datastore}"
-server_truststore_password="${server_truststore_password:-changeit}"
+persistent_datastore="${PERSISTENT_DATASTORE:-/opt/persistent_datastore}"
+server_truststore_password="${SERVER_TRUSTSTORE_PASSWORD:-changeit}"
 
 # configure ejbca
 function configure_ejbca() {
-  local environment="${environment:-local}"
+  local environment="${ENVIRONMENT:-local}"
+  local management_ca_admin="${MANAGEMENT_CA_ADMIN:-superadmin}"
+  local management_ca_admin_password="${MANAGEMENT_CA_ADMIN_PASSWORD:-secret}"
   local management_ca_name="${environment}_management_ca"
-  local management_ca_admin="${management_ca_admin:-superadmin}"
-  local management_ca_admin_password="${management_ca_admin_password:-secret}"
   
   ejbca_initialize_ca $management_ca_name 3072 ${persistent_datastore}/${management_ca_name}.crt
   ejbca_create_truststore $management_ca_name ${persistent_datastore}/${management_ca_name}.crt ${persistent_datastore}/truststore.jks $server_truststore_password
@@ -31,13 +31,13 @@ function configure_ejbca() {
 }
 
 function configure_wildfly() {
-  local server_cert="${server_cert:-${persistent_datastore}/server.crt}"
-  local server_key="${server_key:-${persistent_datastore}/server.key}"
-  local server_key_password="${server_key_password:-secret}"
-  local server_name="${server_name:-localhost}"
-  local server_keystore_path="${server_keystore_path:-${persistent_datastore}/server.jks}"
-  local server_keystore_password="${server_keystore_password:-secret}"
-  local server_truststore_path="${server_truststore_path:-${persistent_datastore}/truststore.jks}"
+  local server_cert="${SERVER_CERT:-${persistent_datastore}/server.crt}"
+  local server_key="${SERVER_KEY:-${persistent_datastore}/server.key}"
+  local server_key_password="${SERVER_KEY_PASSWORD:-secret}"
+  local server_name="${SERVER_NAME:-localhost}"
+  local server_keystore_path="${SERVER_KEYSTORE_PATH:-${persistent_datastore}/server.jks}"
+  local server_keystore_password="${SERVER_KEYSTORE_PASSWORD:-secret}"
+  local server_truststore_path="${SERVER_TRUSTSTORE_PATH:-${persistent_datastore}/truststore.jks}"
 
   convert_p12_to_jks $server_cert $server_key $server_key_password $server_name $server_keystore_path $server_keystore_password
   if ! wildfly_https_listener; then
