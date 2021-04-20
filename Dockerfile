@@ -39,6 +39,10 @@ RUN chmod +x /opt/tools/run.sh /opt/tools/init.sh
 RUN mkdir -p ${EJBCA_HOME}/p12 \
     && chown apps ${EJBCA_HOME}/p12
 
+# Create persistent_datastore and add privileges
+RUN mkdir -p /opt/persistent_datastore \
+    && chown apps /opt/persistent_datastore
+
 # Switch user to apps
 USER apps
 
@@ -48,8 +52,8 @@ ENV LD_LIBRARY_PATH /opt/cloudhsm/lib
 # Set the working directory to /opt
 WORKDIR /opt/
 
-# Expose proxy-http and proxy-https
-EXPOSE 8081 8082
+# Expose http, https and https-priv
+EXPOSE 8080 8442 8443
 
 #Execute run.sh
 CMD ["/opt/tools/run.sh"]
