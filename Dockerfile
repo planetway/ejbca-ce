@@ -5,7 +5,7 @@ USER root
 
 # Install dependencies
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y python-boto
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-boto3
 
 # Copy wildfly configuration and modify permissions
 COPY jenkins-files/planetway/artifacts/wildfly/standalone.xml ${WILDFLY_HOME}/standalone/configuration/standalone.xml
