@@ -41,7 +41,7 @@ function configure_wildfly() {
 
   convert_p12_to_jks $server_cert $server_key $server_key_password $server_name $server_keystore_path $server_keystore_password
   if ! wildfly_https_listener; then
-    wildfly_configure_https $server_keystore_path $server_keystore_password $server_truststore_path $server_truststore_password
+    wildfly_configure_https $server_keystore_path $server_keystore_password $server_key_password $server_truststore_path $server_truststore_password
   fi
 }
 

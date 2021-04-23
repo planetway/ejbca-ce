@@ -38,8 +38,9 @@ function stop_wildfly() {
 function wildfly_configure_https() {
   local keystore_path=$1
   local keystore_password=$2
-  local truststore_path=$3
-  local truststore_password=$4
+  local key_password=$3
+  local truststore_path=$4
+  local truststore_password=$5
 
   log "INFO" "Add New Interfaces and Sockets"
   wildfly_command '/interface=http:add(inet-address="0.0.0.0")'
@@ -52,7 +53,7 @@ function wildfly_configure_https() {
   log "INFO" "Configure TLS"
   wildfly_command "/subsystem=elytron/key-store=httpsKS:add(path=\"$keystore_path\",credential-reference={clear-text=\"$keystore_password\"},type=JKS)"
   wildfly_command "/subsystem=elytron/key-store=httpsTS:add(path=\"$truststore_path\",credential-reference={clear-text=\"$truststore_password\"},type=JKS)"
-  wildfly_command "/subsystem=elytron/key-manager=httpsKM:add(key-store=httpsKS,algorithm=\"SunX509\",credential-reference={clear-text=\"$keystore_password\"})"
+  wildfly_command "/subsystem=elytron/key-manager=httpsKM:add(key-store=httpsKS,algorithm=\"SunX509\",credential-reference={clear-text=\"$key_password\"})"
   wildfly_command '/subsystem=elytron/trust-manager=httpsTM:add(key-store=httpsTS)'
   wildfly_command '/subsystem=elytron/server-ssl-context=httpspub:add(key-manager=httpsKM,protocols=["TLSv1.2"])'
   wildfly_command '/subsystem=elytron/server-ssl-context=httpspriv:add(key-manager=httpsKM,protocols=["TLSv1.2"],trust-manager=httpsTM,need-client-auth=false,authentication-optional=true,want-client-auth=true)'
