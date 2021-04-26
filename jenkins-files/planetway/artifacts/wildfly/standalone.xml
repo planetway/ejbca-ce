@@ -82,7 +82,7 @@
             <console-handler name="CONSOLE">
                 <level name="INFO"/>
                 <formatter>
-                    <named-formatter name="PATTERN"/>
+                    <named-formatter name="JSON"/>
                 </formatter>
             </console-handler>
             <logger category="com.arjuna">
@@ -223,10 +223,14 @@
                     <handler name="CONSOLE"/>
                 </handlers>
             </root-logger>
+            <formatter name="JSON">
+                <json-formatter>
+                </json-formatter>
+            </formatter>
+            <!--
             <formatter name="PATTERN">
                 <pattern-formatter pattern="%d{yyyy-MM-dd HH:mm:ss,SSSZ} %-5p [%c] (%t) %s%e%n"/>
             </formatter>
-            <!--
             <formatter name="LOGSTASH">
                 <json-formatter>
                     <exception-output-type value="formatted"/>

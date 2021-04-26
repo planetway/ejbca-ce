@@ -22,10 +22,10 @@ function log() {
   #threadId="$(ps H -o 'tid' $processId | tail -n 1| tr -d ' ')"
   if [ -z "$2" ] ; then
     while read line ; do
-      echo "$dateString $logLevel [$className] (process:$processId) ${line}"
+      echo "{\"timestamp\":\"$dateString\",\"level\":\"$logLevel\",\"loggerClassName\":\"$className\",\"processId\":\"$processId\",\"message\":\"${line}\"}"
     done
   else
-    echo "$dateString $logLevel [$className] (process:$processId) ${2}"
+    echo "{\"timestamp\":\"$dateString\",\"level\":\"$logLevel\",\"loggerClassName\":\"$className\",\"processId\":\"$processId\",\"message\":\"${2}\"}"
   fi
 }
 
