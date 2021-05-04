@@ -13,6 +13,9 @@ services:
       SERVER_CERT: "/opt/persistent_datastore/server.crt"
       SERVER_KEY: "/opt/persistent_datastore/server.key"
       SERVER_KEY_PASSWORD: "secret"
+      AWS_S3_BUCKET: "bucket.example.com"
+      AWS_ACCESS_KEY_ID: "access_key"
+      AWS_SECRET_ACCESS_KEY: "secret_access_key"
     ports:
       - "8080:8080"
       - "8442:8442"
