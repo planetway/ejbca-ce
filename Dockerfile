@@ -5,7 +5,13 @@ USER root
 
 # Install dependencies
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-boto3
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip
+
+# Upgrade pip and setuptools
+RUN python3 -m pip install -U pip setuptools
+
+# Install boto3 and cryptography with pip
+RUN pip3 install boto3==1.11.12 cryptography==3.4.7
 
 # Copy wildfly configuration and modify permissions
 COPY jenkins-files/planetway/artifacts/wildfly/standalone.xml ${WILDFLY_HOME}/standalone/configuration/standalone.xml
@@ -33,7 +39,7 @@ RUN chmod +x ${EJBCA_HOME}/bin/ejbca.sh \
 
 # Copy tools and set execution privileges
 ADD jenkins-files/planetway/artifacts/tools /opt/tools
-RUN chmod +x /opt/tools/run.sh /opt/tools/init.sh
+RUN chmod +x /opt/tools/run.sh /opt/tools/init.sh /opt/tools/publish_crl_to_s3.py
 
 # Create p12 directory and set permissions
 RUN mkdir -p ${EJBCA_HOME}/p12 \
