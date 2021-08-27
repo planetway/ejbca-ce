@@ -54,7 +54,7 @@ function convert_p12_to_jks () {
 
 function retry_while() {
     local cmd="${1:?cmd is missing}"
-    local retries="${2:-12}"
+    local retries="${2:-24}"
     local sleep_time="${3:-5}"
     local return_value=1
 
