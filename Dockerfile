@@ -1,4 +1,4 @@
-FROM 723692602888.dkr.ecr.eu-north-1.amazonaws.com/wildfly18-cloudhsm-jre8:18.0.1.1
+FROM 723692602888.dkr.ecr.eu-north-1.amazonaws.com/wildfly18-cloudhsm-jre8:18.0.1.2
 
 # Switch user to root
 USER root
@@ -19,7 +19,7 @@ RUN chmod 0600 ${WILDFLY_HOME}/standalone/configuration/standalone.xml \
     && chown apps:0 ${WILDFLY_HOME}/standalone/configuration/standalone.xml
 
 # Set JAVA_OPTS
-ENV JAVA_OPTS="-Xms2048m -Xmx2048m -XX:MetaspaceSize=192M -XX:MaxMetaspaceSize=2048m -Djava.net.preferIPv4Stack=true"
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=80.0 -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256M -Djava.net.preferIPv4Stack=true"
 
 # Set environment variable for EJBCA
 ENV EJBCA_HOME=/opt/ejbca

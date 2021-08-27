@@ -27,7 +27,6 @@ function wait_for_wildfly() {
 function start_wildfly() {
   log "INFO" "Starting wildfly"
   $WILDFLY_HOME/bin/standalone.sh -b 0.0.0.0 &
-  wait_for_wildfly
 }
 
 function stop_wildfly() {

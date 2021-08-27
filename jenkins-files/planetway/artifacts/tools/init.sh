@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# verbose logging
+[[ $TRACE ]] && set -x
+
 # set relative path
 script_path="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 
@@ -46,6 +49,7 @@ function configure_wildfly() {
 }
 
 start_wildfly
+wait_for_wildfly
 configure_ejbca
 configure_wildfly
 stop_wildfly

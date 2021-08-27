@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# verbose logging
+[[ $TRACE ]] && set -x
+
 SCRIPT_PATH="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 
 # shellcheck source=scripts/common_libs.sh
