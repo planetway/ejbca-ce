@@ -17,6 +17,7 @@
 	<path id="compile.classpath">
 		<path location="${mod.ejbca-ejb-interface.lib}"/>
 		<path refid="lib.cloudhsm.classpath"/>
+		<path refid="lib.cloudhsm-jackson2.classpath"/>
 		<path refid="lib.ejbca-common.classpath"/>
 		<path refid="lib.bouncycastle.classpath"/>
 		<path refid="lib.log4j.classpath"/>

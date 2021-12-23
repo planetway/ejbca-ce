@@ -312,6 +312,7 @@
 	</path>
 
 	<path id="lib.cloudhsm.classpath"><fileset dir="${ejbca.home}/lib" includes="cloudhsm-*.jar"/></path>
+	<path id="lib.cloudhsm-jackson2.classpath"><fileset dir="${ejbca.home}/lib" includes="jackson-*.jar"/></path>
 	<path id="lib.log4j.classpath"><fileset dir="${ejbca.home}/lib" includes="log4j*.jar"/></path>
 	<path id="lib.slf4jlog4j.classpath"><fileset dir="${ejbca.home}/lib/ext" includes="slf4j-log4j*.jar"/></path>
 	<path id="lib.slf4japi.classpath"><fileset dir="${ejbca.home}/lib/ext" includes="slf4j-api*.jar"/></path>

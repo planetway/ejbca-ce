@@ -579,8 +579,11 @@
                 <include name="jsch-*.jar" />
                 <include name="jna-*.jar" />
                 <include name="cloudhsm-*.jar" />
-				<include name="log4j-api-2.8.jar" />
-				<include name="log4j-core-2.8.jar" />
+        <include name="jackson-annotations-2.12.4.jar" />
+        <include name="jackson-core-2.12.4.jar" />
+        <include name="jackson-databind-2.12.4.jar" />
+				<include name="log4j-api-2.17.0.jar" />
+				<include name="log4j-core-2.17.0.jar" />
             </zipfileset>
             <zipfileset prefix="lib" dir="${lib}/ct" erroronmissingdir="false">
                 <!-- Certificate Transparency -->
