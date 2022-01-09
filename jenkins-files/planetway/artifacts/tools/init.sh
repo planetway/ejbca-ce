@@ -22,15 +22,14 @@ server_truststore_password="${SERVER_TRUSTSTORE_PASSWORD:-changeit}"
 
 # configure ejbca
 function configure_ejbca() {
-  local environment="${ENVIRONMENT:-local}"
   local management_ca_admin="${MANAGEMENT_CA_ADMIN:-superadmin}"
   local management_ca_admin_password="${MANAGEMENT_CA_ADMIN_PASSWORD:-secret}"
-  local management_ca_name="${environment}_management_ca"
+  local management_ca_name="${MANAGEMENT_CA_NAME:-${ENVIRONMENT}_management_ca}"
   
-  ejbca_initialize_ca $management_ca_name 3072 ${persistent_datastore}/${management_ca_name}.crt
-  ejbca_create_truststore $management_ca_name ${persistent_datastore}/${management_ca_name}.crt ${persistent_datastore}/truststore.jks $server_truststore_password
-  ejbca_create_end_entity $management_ca_name $management_ca_admin $management_ca_admin_password
-  ejbca_add_rolemember $management_ca_name 'Super Administrator Role' $management_ca_admin
+  ejbca_initialize_ca "$management_ca_name" 3072 ${persistent_datastore}/"${management_ca_name}".crt
+  ejbca_create_truststore "$management_ca_name" ${persistent_datastore}/"${management_ca_name}".crt ${persistent_datastore}/truststore.jks $server_truststore_password
+  ejbca_create_end_entity "$management_ca_name" $management_ca_admin $management_ca_admin_password
+  ejbca_add_rolemember "$management_ca_name" 'Super Administrator Role' $management_ca_admin
 }
 
 function configure_wildfly() {
