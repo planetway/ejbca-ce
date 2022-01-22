@@ -1,4 +1,4 @@
-FROM 723692602888.dkr.ecr.eu-north-1.amazonaws.com/wildfly18-cloudhsm-jre8:18.0.1.3
+FROM 723692602888.dkr.ecr.eu-north-1.amazonaws.com/wildfly18-cloudhsm-jre8:18.0.1.4
 
 # Switch user to root
 USER root

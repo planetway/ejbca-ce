@@ -3,7 +3,7 @@
 
 # global variables
 # VERSION="${1-unspecified}"
-BUILD_CONTAINER_IMAGE="${BUILD_CONTAINER_IMAGE:-723692602888.dkr.ecr.eu-north-1.amazonaws.com/wildfly18-ant-cloudhsm-jdk8:18.0.1.3}"
+BUILD_CONTAINER_IMAGE="${BUILD_CONTAINER_IMAGE:-723692602888.dkr.ecr.eu-north-1.amazonaws.com/wildfly18-ant-cloudhsm-jdk8:18.0.1.4}"
 BUILD_CONTAINER_COMMAND="${BUILD_CONTAINER_COMMAND:-ant -q -Dappserver.home=/opt/wildfly -Dappserver.type=jboss -Dappserver.subtype=jbosseap6 -Dejbca.productionmode=true clean build clientToolBox}"
 SCRIPT_PATH="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 
