@@ -61,6 +61,4 @@ function wildfly_configure_https() {
   wildfly_command '/subsystem=undertow/server=default-server/http-listener=http:add(socket-binding="http", redirect-socket="httpspriv")'
   wildfly_command '/subsystem=undertow/server=default-server/https-listener=httpspub:add(socket-binding="httpspub", ssl-context="httpspub", max-parameters=2048)'
   wildfly_command '/subsystem=undertow/server=default-server/https-listener=httpspriv:add(socket-binding="httpspriv", ssl-context="httpspriv", max-parameters=2048)'
-  wildfly_command ':reload'
-  wait_for_wildfly
 }
