@@ -5,7 +5,7 @@ USER root
 
 # Install dependencies
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip curl
 
 # Upgrade pip and setuptools
 RUN python3 -m pip install -U pip setuptools

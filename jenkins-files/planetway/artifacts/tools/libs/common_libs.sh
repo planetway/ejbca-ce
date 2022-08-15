@@ -37,19 +37,17 @@ function convert_p12_to_jks () {
   local jks_path=$5
   local jks_password=$6
   
-  if [[ ! -f $jks_path ]]; then
-    openssl pkcs12  -export -in $cert -inkey $key -name $alias \
-                    -out /tmp/keystore.p12 \
-                    -passin pass:${key_password} -passout pass:${key_password}
+  openssl pkcs12  -export -in $cert -inkey $key -name $alias \
+                  -out /tmp/keystore.p12 \
+                  -passin pass:${key_password} -passout pass:${key_password}
 
-    keytool -importkeystore -noprompt \
-            -srckeystore /tmp/keystore.p12 \
-            -srcstorepass $key_password \
-            -destkeystore $jks_path \
-            -deststorepass $jks_password \
-            -deststoretype jks
-    rm /tmp/keystore.p12
-  fi
+  keytool -importkeystore -noprompt \
+          -srckeystore /tmp/keystore.p12 \
+          -srcstorepass $key_password \
+          -destkeystore $jks_path \
+          -deststorepass $jks_password \
+          -deststoretype jks
+  rm /tmp/keystore.p12
 }
 
 function retry_while() {
