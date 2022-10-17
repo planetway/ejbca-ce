@@ -11,4 +11,4 @@ server_keystore_password="${SERVER_KEYSTORE_PASSWORD:-secret}"
 # Fail if the certificate will expire in 24h
 keytool -export -keystore $server_keystore_path -alias $server_name -rfc -protected | openssl x509 -checkend 86400 -noout
 
-curl -sf http://localhost:8080/ejbca
+curl -f http://localhost:8080/ejbca
